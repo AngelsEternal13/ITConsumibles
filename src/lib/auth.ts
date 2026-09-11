@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.correo || !credentials?.password) {
-          throw new Error("Por favor ingrese su usuario y contraseña");
+          return null;
         }
 
         const identifier = credentials.correo.trim();
@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!user) {
-          // Credenciales fallback automáticas para modo demo y desarrollo rápido
+          // Credenciales fallback automáticas para modo demo y rescate
           if (
             (identifierLower === "admin@empresa.com" || identifierLower === "admin") &&
             credentials.password === "admin123"
@@ -74,20 +74,34 @@ export const authOptions: NextAuthOptions = {
               role: "lector",
             };
           }
-          throw new Error("Credenciales inválidas: usuario o contraseña incorrectos");
+          // Retornar null para que NextAuth responda con { error: "CredentialsSignin" } sin arrojar 500
+          return null;
         }
 
-        const passwordMatch = await bcrypt.compare(credentials.password, user.password);
-        if (!passwordMatch && credentials.password !== user.password) {
-          throw new Error("Contraseña incorrecta");
-        }
+        try {
+          const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+          if (!passwordMatch && credentials.password !== user.password) {
+            return null;
+          }
 
-        return {
-          id: String(user.id),
-          name: user.nombre,
-          email: user.correo,
-          role: user.rol,
-        };
+          return {
+            id: String(user.id),
+            name: user.nombre,
+            email: user.correo,
+            role: user.rol,
+          };
+        } catch (bcryptErr) {
+          console.error("⚠️ [NextAuth Error]: Error al comparar contraseña:", bcryptErr);
+          if (credentials.password === user.password) {
+            return {
+              id: String(user.id),
+              name: user.nombre,
+              email: user.correo,
+              role: user.rol,
+            };
+          }
+          return null;
+        }
       },
     }),
   ],

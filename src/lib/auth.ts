@@ -6,6 +6,11 @@ import { usuarios } from "@/db/schema";
 import { eq, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
+// Auto-detectar URL en Netlify si NEXTAUTH_URL no está seteada explícitamente
+if (!process.env.NEXTAUTH_URL && process.env.URL) {
+  process.env.NEXTAUTH_URL = process.env.URL;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     ...(process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET && process.env.AZURE_AD_TENANT_ID
@@ -119,6 +124,16 @@ export const authOptions: NextAuthOptions = {
         (session.user as unknown as { id: string; role: string }).role = (token.role as string) || "lector";
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return url;
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname === "localhost" && baseUrl && !baseUrl.includes("localhost")) {
+          return `${baseUrl}${parsed.pathname}${parsed.search}`;
+        }
+      } catch {}
+      return url;
     },
   },
   pages: {

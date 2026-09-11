@@ -7,6 +7,7 @@ export interface ConsumibleCalculoItem {
   acopiosAgencia: number;
   marca: string;
   modeloImpresora: string;
+  cantidadImpresoras: number; // Alias retrocompatible (equipos operativos en acopio)
   cantidadImpresorasTotal: number;
   cantidadImpresorasOperativas: number; // Impresoras activas asignadas a los acopios
   tipoConsumible: string;
@@ -24,6 +25,7 @@ export interface UpsCalculoItem {
   acopiosAgencia: number;
   marcaImpresora: string;
   modeloImpresora: string;
+  cantidadImpresoras: number; // Alias retrocompatible (equipos operativos en acopio)
   cantidadImpresorasTotal: number;
   cantidadImpresorasOperativas: number;
   upsRequeridaVa: number;
@@ -204,6 +206,7 @@ export function calcularConsumibles(
         acopiosAgencia: acopios,
         marca: data.marca,
         modeloImpresora: modelo,
+        cantidadImpresoras: cantidadOperativa,
         cantidadImpresorasTotal: data.cantidad,
         cantidadImpresorasOperativas: cantidadOperativa,
         tipoConsumible: regla.tipo_consumible,
@@ -297,6 +300,7 @@ export function calcularUPS(
         acopiosAgencia: acopios,
         marcaImpresora: data.marca,
         modeloImpresora: modelo,
+        cantidadImpresoras: cantidadOperativa,
         cantidadImpresorasTotal: data.cantidad,
         cantidadImpresorasOperativas: cantidadOperativa,
         upsRequeridaVa: va,

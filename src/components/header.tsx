@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Search,
   BellRing,
-  Database,
   Trash2,
   CheckCircle2,
   Building2,
@@ -32,8 +31,6 @@ export function Header() {
   const { data: session, status } = useSession();
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
-  const [dbModalOpen, setDbModalOpen] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
   // Search State
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -156,26 +153,6 @@ export function Header() {
       toast.error("No se pudo descargar el archivo PDF");
     } finally {
       setExportingPdf(false);
-    }
-  };
-
-  const handleResetDatabase = async (accion: "limpiar" | "resembrar") => {
-    try {
-      setResetting(true);
-      const res = await fetch("/api/sistema/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accion }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al reiniciar");
-      toast.success(data.mensaje);
-      queryClient.invalidateQueries();
-      setDbModalOpen(false);
-    } catch (err: any) {
-      toast.error(err.message || "Error");
-    } finally {
-      setResetting(false);
     }
   };
 
@@ -368,16 +345,6 @@ export function Header() {
             </button>
           </div>
 
-          {/* Database management button */}
-          <button
-            onClick={() => setDbModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md bg-muted hover:bg-muted/80 text-foreground border border-border transition-colors cursor-pointer"
-            title="Gestión de Base de Datos y Limpieza para Carga en Blanco"
-          >
-            <Database className="w-3.5 h-3.5 text-primary" />
-            <span>Base de Datos</span>
-          </button>
-
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -415,100 +382,6 @@ export function Header() {
           </div>
         </div>
       </header>
-
-      {/* Modal de Opciones de Base de Datos y Turso */}
-      {dbModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-card border border-border rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2.5">
-                <Database className="w-5 h-5 text-primary" />
-                <h2 className="text-base font-bold text-foreground">
-                  Gestión de Datos del Sistema
-                </h2>
-              </div>
-              <button
-                onClick={() => setDbModalOpen(false)}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="p-3 bg-muted/40 rounded-lg border border-border space-y-1.5 text-xs">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground font-medium">Servidor de Datos:</span>
-                <span className="font-bold text-foreground">Base de Datos Centralizada</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground font-medium">Estado de Conexión:</span>
-                <span className="font-semibold text-emerald-600">En línea y Sincronizada</span>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Opciones de Carga de Datos
-              </h3>
-
-              {/* Botón Vaciar para empezar en blanco */}
-              <div className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20 flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400">
-                    Limpiar Todo y Empezar en Blanco
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground">
-                    Elimina los registros de ejemplo para que puedas digitar todas tus agencias, impresoras y consumibles uno a uno.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirm("¿Deseas vaciar la base de datos para ingresar tus agencias y equipos reales uno a uno?")) {
-                      handleResetDatabase("limpiar");
-                    }
-                  }}
-                  disabled={resetting}
-                  className="px-3 py-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shrink-0 cursor-pointer disabled:opacity-60"
-                >
-                  {resetting ? "Limpiando..." : "Vaciar Datos"}
-                </button>
-              </div>
-
-              {/* Botón Restaurar Demo */}
-              <div className="p-3 rounded-lg border border-border bg-card flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">
-                    Cargar Datos de Demostración
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground">
-                    Re-puebla agencias de prueba con impresoras, consumibles y UPS para verificar reportes y fórmulas.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (confirm("¿Deseas cargar nuevamente los datos de ejemplo iniciales?")) {
-                      handleResetDatabase("resembrar");
-                    }
-                  }}
-                  disabled={resetting}
-                  className="px-3 py-1.5 rounded-md bg-primary hover:bg-primary-600 text-white font-bold text-xs shrink-0 cursor-pointer disabled:opacity-60"
-                >
-                  {resetting ? "Cargando..." : "Cargar Demo"}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-3 border-t border-border">
-              <button
-                onClick={() => setDbModalOpen(false)}
-                className="px-4 py-1.5 text-xs font-semibold rounded-md border border-border hover:bg-muted transition-colors cursor-pointer"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

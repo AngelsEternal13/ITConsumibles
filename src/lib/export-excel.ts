@@ -50,16 +50,19 @@ export async function generarLibroExcel({
     wsMatriz.columns = [
       { header: "Agencia", key: "agencia", width: 22 },
       { header: "Departamento", key: "depto", width: 18 },
-      { header: "Acopios a Abrir", key: "acopios", width: 16 },
-      { header: "Impresoras Existentes", key: "imp_exist", width: 20 },
-      { header: "Impresoras Requeridas", key: "imp_req", width: 20 },
-      { header: "Déficit / Sobra Impresoras", key: "imp_bal", width: 22 },
-      { header: "Consumibles en Stock", key: "con_exist", width: 20 },
-      { header: "Consumibles Requeridos", key: "con_req", width: 22 },
-      { header: "Déficit / Sobra Consumibles", key: "con_bal", width: 24 },
-      { header: "UPS en Stock", key: "ups_exist", width: 16 },
-      { header: "UPS Requeridas", key: "ups_req", width: 16 },
-      { header: "Déficit / Sobra UPS", key: "ups_bal", width: 20 },
+      { header: "Acopios Ext.", key: "acopios_ext", width: 14 },
+      { header: "Acopios (+1 Sede)", key: "acopios_tot", width: 16 },
+      { header: "Pequeñas Acopio", key: "imp_peq", width: 16 },
+      { header: "Grandes Fijas", key: "imp_gran", width: 16 },
+      { header: "Total Impresoras", key: "imp_exist", width: 18 },
+      { header: "Total Requeridas", key: "imp_req", width: 18 },
+      { header: "Balance Acopios", key: "imp_bal", width: 20 },
+      { header: "Consumibles Stock", key: "con_exist", width: 18 },
+      { header: "Consumibles Req.", key: "con_req", width: 18 },
+      { header: "Balance Consumibles", key: "con_bal", width: 20 },
+      { header: "UPS Stock", key: "ups_exist", width: 14 },
+      { header: "UPS Req.", key: "ups_req", width: 14 },
+      { header: "Balance UPS", key: "ups_bal", width: 18 },
       { header: "Estado Cobertura", key: "estado", width: 18 },
     ];
 
@@ -70,14 +73,17 @@ export async function generarLibroExcel({
     });
 
     for (const item of matrizAcopios) {
-      const impBal = item.impresorasFaltantes > 0 ? `Faltan ${item.impresorasFaltantes}` : item.impresorasSobrantes > 0 ? `Sobran ${item.impresorasSobrantes}` : "Exacto";
+      const impBal = item.impresorasFaltantes > 0 ? `Faltan ${item.impresorasFaltantes} acopio(s)` : item.impresorasSobrantes > 0 ? `Sobran ${item.impresorasSobrantes}` : "Cubierto";
       const conBal = item.consumiblesFaltantes > 0 ? `Faltan ${item.consumiblesFaltantes}` : item.consumiblesSobrantes > 0 ? `Sobran ${item.consumiblesSobrantes}` : "Exacto";
       const upsBal = item.upsFaltantes > 0 ? `Faltan ${item.upsFaltantes}` : item.upsSobrantes > 0 ? `Sobran ${item.upsSobrantes}` : "Exacto";
 
       const row = wsMatriz.addRow({
         agencia: item.agenciaNombre,
         depto: item.departamento,
-        acopios: item.acopiosAAbrir,
+        acopios_ext: item.acopiosAAbrir,
+        acopios_tot: item.acopiosTotales || (item.acopiosAAbrir + 1),
+        imp_peq: item.impresorasPequenasExistentes ?? (item.impresorasExistentes - (item.impresorasGrandesExistentes || 0)),
+        imp_gran: item.impresorasGrandesExistentes ?? 0,
         imp_exist: item.impresorasExistentes,
         imp_req: item.impresorasRequeridas,
         imp_bal: impBal,

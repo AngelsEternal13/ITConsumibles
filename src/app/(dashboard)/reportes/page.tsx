@@ -390,7 +390,7 @@ export default function ReportesPage() {
               <thead className="bg-muted/60 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
                 <tr>
                   <th className="px-5 py-3">Agencia</th>
-                  <th className="px-4 py-3 text-center bg-primary/5 text-primary font-bold">Acopios a Abrir</th>
+                  <th className="px-4 py-3 text-center bg-primary/5 text-primary font-bold">Acopios (+1 Sede)</th>
                   <th className="px-5 py-3 text-center">Impresoras en Stock</th>
                   <th className="px-5 py-3 text-center">Consumibles en Stock</th>
                   <th className="px-5 py-3 text-center">UPS en Existencia</th>
@@ -433,16 +433,22 @@ export default function ReportesPage() {
                           <div className="font-bold text-foreground">{item.agenciaNombre}</div>
                           <div className="text-xs text-muted-foreground">{item.departamento}</div>
                         </td>
-                        <td className="px-4 py-3.5 text-center bg-primary/5 font-black text-primary text-base">
-                          {item.acopiosAAbrir}
+                        <td className="px-4 py-3.5 text-center bg-primary/5">
+                          <span className="font-black text-primary text-base block">{item.acopiosAAbrir}</span>
+                          <span className="text-[10px] text-muted-foreground block">+1 en sede</span>
                         </td>
                         <td className="px-5 py-3.5 text-center">
                           <div className="font-bold text-foreground">
                             {item.impresorasExistentes} <span className="text-xs font-normal text-muted-foreground">/ {item.impresorasRequeridas} req.</span>
                           </div>
                           <span className={`inline-block mt-0.5 px-2 py-0.2 rounded text-2xs font-bold border ${impBadge}`}>
-                            {item.impresorasFaltantes > 0 ? `Faltan ${item.impresorasFaltantes}` : item.impresorasSobrantes > 0 ? `Sobran ${item.impresorasSobrantes}` : "Exacto"}
+                            {item.impresorasFaltantes > 0 ? `Faltan ${item.impresorasFaltantes} acopio(s)` : item.impresorasSobrantes > 0 ? `Sobran ${item.impresorasSobrantes} (transf.)` : "Acopios Cubiertos"}
                           </span>
+                          {item.impresorasGrandesExistentes && item.impresorasGrandesExistentes > 0 ? (
+                            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 block mt-0.5 font-medium">
+                              Incluye {item.impresorasGrandesExistentes} grande(s) fija(s)
+                            </span>
+                          ) : null}
                         </td>
                         <td className="px-5 py-3.5 text-center">
                           <div className="font-bold text-foreground">

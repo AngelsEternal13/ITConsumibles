@@ -170,7 +170,7 @@ export function DashboardView() {
               en {metricas.totalAgencias} agencias
             </span>
           </div>
-          <p className="text-2xs text-muted-foreground mt-1">1 acopio = 1 impresora requerida</p>
+          <p className="text-2xs text-muted-foreground mt-1">1 acopio = 1 impresora pequeña (+1 en sede)</p>
         </div>
 
         {/* Impresoras en Stock vs Acopios */}
@@ -195,7 +195,7 @@ export function DashboardView() {
               </span>
             )}
           </div>
-          <p className="text-2xs text-muted-foreground mt-1">Inventario físico en agencias</p>
+          <p className="text-2xs text-muted-foreground mt-1">Pequeñas (acopios) + Grandes fijas</p>
         </div>
 
         {/* Total Consumibles */}
@@ -212,7 +212,7 @@ export function DashboardView() {
             <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalConsumibles)}</span>
             <span className="text-xs text-muted-foreground">unidades</span>
           </div>
-          <p className="text-2xs text-muted-foreground mt-1">Para acopios en operación</p>
+          <p className="text-2xs text-muted-foreground mt-1">Para acopios y sede</p>
         </div>
 
         {/* Total UPS */}
@@ -244,7 +244,7 @@ export function DashboardView() {
               Matriz de Cobertura Operativa: Acopios vs Equipamiento por Agencia
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Compara directamente los acopios a abrir vs impresoras en existencia vs stock de tóner/tinta vs respaldo UPS
+              Compara directamente los acopios a abrir (+1 en sede) vs impresoras en stock (pequeñas y grandes fijas) vs tóner/tinta vs UPS
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export function DashboardView() {
             <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
               <tr>
                 <th className="px-5 py-3.5">Agencia / Sucursal</th>
-                <th className="px-4 py-3.5 text-center bg-primary/5 text-primary font-bold">Acopios a Abrir</th>
+                <th className="px-4 py-3.5 text-center bg-primary/5 text-primary font-bold">Acopios (+1 Sede)</th>
                 <th className="px-5 py-3.5 text-center">Impresoras en Stock</th>
                 <th className="px-5 py-3.5 text-center">Tóner / Tinta en Stock</th>
                 <th className="px-5 py-3.5 text-center">UPS en Existencia</th>
@@ -343,6 +343,7 @@ export function DashboardView() {
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-black text-sm">
                           {item.acopiosAAbrir}
                         </span>
+                        <span className="text-[10px] text-muted-foreground block mt-0.5">+1 en sede</span>
                       </td>
 
                       {/* Impresoras vs Acopios */}
@@ -352,11 +353,16 @@ export function DashboardView() {
                         </div>
                         <span className={`inline-block mt-1 px-2 py-0.5 rounded text-2xs font-bold border ${impStatusColor}`}>
                           {item.impresorasFaltantes > 0
-                            ? `Faltan ${item.impresorasFaltantes}`
+                            ? `Faltan ${item.impresorasFaltantes} acopio(s)`
                             : item.impresorasSobrantes > 0
-                            ? `Sobran ${item.impresorasSobrantes}`
-                            : "Exacto"}
+                            ? `Sobran ${item.impresorasSobrantes} (transf.)`
+                            : "Acopios Cubiertos"}
                         </span>
+                        {item.impresorasGrandesExistentes && item.impresorasGrandesExistentes > 0 ? (
+                          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 block mt-0.5 font-medium">
+                            Incluye {item.impresorasGrandesExistentes} grande(s) fija(s)
+                          </span>
+                        ) : null}
                       </td>
 
                       {/* Consumibles vs Requerimiento de Acopios */}

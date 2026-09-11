@@ -54,7 +54,8 @@ export async function GET() {
       consumiblesData,
       upsData,
       calculoConsumibles,
-      calculoUPS
+      calculoUPS,
+      reglasData
     );
 
     const consolidado = generarConsolidado(

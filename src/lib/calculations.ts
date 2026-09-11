@@ -193,8 +193,8 @@ export function calcularConsumibles(
 
     const totalPequenasAgencia = modelosPequenos.reduce((acc, m) => acc + (modelosMap.get(m)?.cantidad || 0), 0);
 
-    // Requerimiento de pequeñas: Acopios a abrir + 1 para la agencia (opera como agencia y acopio)
-    const reqPequenas = acopios > 0 ? (acopios + 1) : (totalPequenasAgencia > 0 ? 1 : 0);
+    // Requerimiento de pequeñas: Acopios a cubrir (la cantidad reportada ya incluye la agencia)
+    const reqPequenas = acopios > 0 ? acopios : totalPequenasAgencia;
     const totalPequenasOperativas = Math.min(totalPequenasAgencia, reqPequenas);
 
     // 1. PROCESAR MODELOS GRANDES (EXCEPCIÓN: Fijas en agencia al 100%, independientes de acopios)
@@ -344,7 +344,7 @@ export function calcularUPS(
     }
 
     const totalPequenasAgencia = modelosPequenos.reduce((acc, m) => acc + (modelosMap.get(m)?.cantidad || 0), 0);
-    const reqPequenas = acopios > 0 ? (acopios + 1) : (totalPequenasAgencia > 0 ? 1 : 0);
+    const reqPequenas = acopios > 0 ? acopios : totalPequenasAgencia;
     const totalPequenasOperativas = Math.min(totalPequenasAgencia, reqPequenas);
 
     // 1. MODELOS GRANDES (100% activos en agencia siempre)
@@ -502,9 +502,8 @@ export function calcularMatrizAcopios(
 
     const impresorasExistentes = impresorasGrandesExistentes + impresorasPequenasExistentes;
 
-    // Requerimiento de acopios: Acopios externos a abrir + 1 para la agencia (opera como agencia y acopio)
-    const acopiosTotales = acopios > 0 ? (acopios + 1) : (impresorasPequenasExistentes > 0 ? 1 : 0);
-    const impresorasPequenasRequeridas = acopiosTotales;
+    // Requerimiento de acopios: La cantidad reportada de acopios ya incluye la agencia
+    const impresorasPequenasRequeridas = acopios > 0 ? acopios : impresorasPequenasExistentes;
 
     // Requerimiento total de impresoras = pequeñas de acopios + grandes fijas de agencia
     const impresorasRequeridas = impresorasPequenasRequeridas + impresorasGrandesExistentes;
@@ -529,7 +528,7 @@ export function calcularMatrizAcopios(
 
     // 4. Estado de Cobertura
     let estadoCobertura: "cubierto" | "al_limite" | "deficit" = "cubierto";
-    let mensajeEstado = `Cobertura Total: Acopios cubiertos (${acopios} ext. + 1 en sede).`;
+    let mensajeEstado = `Cobertura Total: Acopios cubiertos (${acopios} acopios).`;
     if (impresorasGrandesExistentes > 0) {
       mensajeEstado += ` Sede con ${impresorasGrandesExistentes} grande(s) fija(s) (IR/MF).`;
     }
@@ -544,9 +543,9 @@ export function calcularMatrizAcopios(
       if (impresorasGrandesExistentes > 0) {
         mensajeEstado += ` (Posee ${impresorasGrandesExistentes} grande(s) fija(s) en agencia).`;
       }
-    } else if (impresorasSobrantes === 0 && consumiblesSobrantes === 0 && upsSobrantes === 0 && acopiosTotales > 0) {
+    } else if (impresorasSobrantes === 0 && consumiblesSobrantes === 0 && upsSobrantes === 0 && acopios > 0) {
       estadoCobertura = "al_limite";
-      mensajeEstado = `Al Límite: Stock exacto para acopios (${acopios} ext. + 1 en sede).`;
+      mensajeEstado = `Al Límite: Stock exacto para los ${acopios} acopios.`;
     }
 
     matriz.push({
@@ -554,7 +553,7 @@ export function calcularMatrizAcopios(
       agenciaNombre: ag.nombre,
       departamento: ag.departamento,
       acopiosAAbrir: acopios,
-      acopiosTotales,
+      acopiosTotales: acopios,
       impresorasExistentes,
       impresorasPequenasExistentes,
       impresorasPequenasRequeridas,

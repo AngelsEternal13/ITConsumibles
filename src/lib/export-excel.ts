@@ -50,8 +50,7 @@ export async function generarLibroExcel({
     wsMatriz.columns = [
       { header: "Agencia", key: "agencia", width: 22 },
       { header: "Departamento", key: "depto", width: 18 },
-      { header: "Acopios Ext.", key: "acopios_ext", width: 14 },
-      { header: "Acopios (+1 Sede)", key: "acopios_tot", width: 16 },
+      { header: "Acopios a Abrir", key: "acopios", width: 16 },
       { header: "Pequeñas Acopio", key: "imp_peq", width: 16 },
       { header: "Grandes Fijas", key: "imp_gran", width: 16 },
       { header: "Total Impresoras", key: "imp_exist", width: 18 },
@@ -80,8 +79,7 @@ export async function generarLibroExcel({
       const row = wsMatriz.addRow({
         agencia: item.agenciaNombre,
         depto: item.departamento,
-        acopios_ext: item.acopiosAAbrir,
-        acopios_tot: item.acopiosTotales || (item.acopiosAAbrir + 1),
+        acopios: item.acopiosAAbrir,
         imp_peq: item.impresorasPequenasExistentes ?? (item.impresorasExistentes - (item.impresorasGrandesExistentes || 0)),
         imp_gran: item.impresorasGrandesExistentes ?? 0,
         imp_exist: item.impresorasExistentes,

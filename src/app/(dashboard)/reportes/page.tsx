@@ -390,7 +390,7 @@ export default function ReportesPage() {
               <thead className="bg-muted/60 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
                 <tr>
                   <th className="px-5 py-3">Agencia</th>
-                  <th className="px-4 py-3 text-center bg-primary/5 text-primary font-bold">Acopios (+1 Sede)</th>
+                  <th className="px-4 py-3 text-center bg-primary/5 text-primary font-bold">Acopios a Abrir</th>
                   <th className="px-5 py-3 text-center">Impresoras en Stock</th>
                   <th className="px-5 py-3 text-center">Consumibles en Stock</th>
                   <th className="px-5 py-3 text-center">UPS en Existencia</th>
@@ -433,9 +433,8 @@ export default function ReportesPage() {
                           <div className="font-bold text-foreground">{item.agenciaNombre}</div>
                           <div className="text-xs text-muted-foreground">{item.departamento}</div>
                         </td>
-                        <td className="px-4 py-3.5 text-center bg-primary/5">
-                          <span className="font-black text-primary text-base block">{item.acopiosAAbrir}</span>
-                          <span className="text-[10px] text-muted-foreground block">+1 en sede</span>
+                        <td className="px-4 py-3.5 text-center bg-primary/5 font-black text-primary text-base">
+                          {item.acopiosAAbrir}
                         </td>
                         <td className="px-5 py-3.5 text-center">
                           <div className="font-bold text-foreground">

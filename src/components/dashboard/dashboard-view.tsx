@@ -170,7 +170,7 @@ export function DashboardView() {
               en {metricas.totalAgencias} agencias
             </span>
           </div>
-          <p className="text-2xs text-muted-foreground mt-1">1 acopio = 1 impresora pequeña (+1 en sede)</p>
+          <p className="text-2xs text-muted-foreground mt-1">1 acopio = 1 impresora pequeña</p>
         </div>
 
         {/* Impresoras en Stock vs Acopios */}
@@ -244,7 +244,7 @@ export function DashboardView() {
               Matriz de Cobertura Operativa: Acopios vs Equipamiento por Agencia
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Compara directamente los acopios a abrir (+1 en sede) vs impresoras en stock (pequeñas y grandes fijas) vs tóner/tinta vs UPS
+              Compara directamente los acopios a abrir vs impresoras en stock (pequeñas y grandes fijas) vs tóner/tinta vs UPS
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export function DashboardView() {
             <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
               <tr>
                 <th className="px-5 py-3.5">Agencia / Sucursal</th>
-                <th className="px-4 py-3.5 text-center bg-primary/5 text-primary font-bold">Acopios (+1 Sede)</th>
+                <th className="px-4 py-3.5 text-center bg-primary/5 text-primary font-bold">Acopios a Abrir</th>
                 <th className="px-5 py-3.5 text-center">Impresoras en Stock</th>
                 <th className="px-5 py-3.5 text-center">Tóner / Tinta en Stock</th>
                 <th className="px-5 py-3.5 text-center">UPS en Existencia</th>
@@ -343,7 +343,6 @@ export function DashboardView() {
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-black text-sm">
                           {item.acopiosAAbrir}
                         </span>
-                        <span className="text-[10px] text-muted-foreground block mt-0.5">+1 en sede</span>
                       </td>
 
                       {/* Impresoras vs Acopios */}

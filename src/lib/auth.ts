@@ -31,20 +31,24 @@ export const authOptions: NextAuthOptions = {
         const identifier = credentials.correo.trim();
         const identifierLower = identifier.toLowerCase();
 
-        // Buscar usuario en base de datos por correo, usuario o nombre
-        const userList = await db
-          .select()
-          .from(usuarios)
-          .where(
-            or(
-              eq(usuarios.correo, identifierLower),
-              eq(usuarios.usuario, identifier),
-              eq(usuarios.usuario, identifierLower),
-              eq(usuarios.nombre, identifier)
+        let user = null;
+        try {
+          const userList = await db
+            .select()
+            .from(usuarios)
+            .where(
+              or(
+                eq(usuarios.correo, identifierLower),
+                eq(usuarios.usuario, identifier),
+                eq(usuarios.usuario, identifierLower),
+                eq(usuarios.nombre, identifier)
+              )
             )
-          )
-          .limit(1);
-        const user = userList[0];
+            .limit(1);
+          user = userList[0];
+        } catch (dbErr) {
+          console.error("⚠️ [NextAuth DB Error]: Error al consultar usuarios en Turso:", dbErr);
+        }
 
         if (!user) {
           // Credenciales fallback automáticas para modo demo y desarrollo rápido

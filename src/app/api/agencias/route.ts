@@ -10,8 +10,9 @@ export async function GET() {
   try {
     const list = await db.select().from(agencias).orderBy(agencias.nombre);
     return NextResponse.json(list);
-  } catch (error) {
-    return NextResponse.json({ error: "Error al obtener agencias" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Error en GET /api/agencias:", error);
+    return NextResponse.json({ error: "Error al obtener agencias", details: error?.message || String(error) }, { status: 500 });
   }
 }
 

@@ -33,7 +33,8 @@ interface UsuarioItem {
 export default function UsuariosPage() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
-  const esAdmin = session?.user?.role === "admin";
+  const esLector = (session?.user as any)?.role?.toLowerCase() === "lector" || (session?.user as any)?.rol?.toLowerCase() === "lector";
+  const esAdmin = !esLector;
 
   const [search, setSearch] = useState("");
   const [filterRol, setFilterRol] = useState("todos");

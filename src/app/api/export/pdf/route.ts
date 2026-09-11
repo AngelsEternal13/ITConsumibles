@@ -11,6 +11,7 @@ import {
 import {
   calcularConsumibles,
   calcularUPS,
+  calcularMatrizAcopios,
   generarConsolidado,
 } from "@/lib/calculations";
 import { generarReportePDF } from "@/lib/export-pdf";
@@ -47,9 +48,19 @@ export async function GET() {
 
     const calculoUPS = calcularUPS(agenciasData, impresorasData, upsData, reglasData);
 
+    const matrizAcopios = calcularMatrizAcopios(
+      agenciasData,
+      impresorasData,
+      consumiblesData,
+      upsData,
+      calculoConsumibles,
+      calculoUPS
+    );
+
     const consolidado = generarConsolidado(
       calculoConsumibles,
       calculoUPS,
+      matrizAcopios,
       comprasData
     );
 
@@ -58,7 +69,6 @@ export async function GET() {
       ups: calculoUPS,
       consolidado,
       usuarioNombre,
-      fechaEmision: new Date().toISOString(),
     });
 
     const filename = `Reporte_Ejecutivo_Requerimientos_${new Date().toISOString().split("T")[0]}.pdf`;
@@ -70,8 +80,8 @@ export async function GET() {
         "Content-Type": "application/pdf",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generando PDF:", error);
-    return NextResponse.json({ error: "Error al generar archivo PDF" }, { status: 500 });
+    return NextResponse.json({ error: "Error al generar archivo PDF", details: error?.message }, { status: 500 });
   }
 }

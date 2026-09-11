@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Building2,
@@ -9,11 +10,14 @@ import {
   ShoppingCart,
   ArrowRightLeft,
   AlertTriangle,
-  TrendingDown,
   CheckCircle2,
   ShieldAlert,
   ArrowUpRight,
   Sparkles,
+  Search,
+  Filter,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -29,10 +33,14 @@ import {
 } from "recharts";
 import { formatNumber } from "@/lib/utils";
 import Link from "next/link";
+import { MatrizAcopioItem } from "@/lib/calculations";
 
 const COLORS = ["#0078D4", "#107C41", "#FF8C00", "#D13438", "#8764B8", "#00B7C3", "#004E8C", "#E3008C"];
 
 export function DashboardView() {
+  const [filtroMatriz, setFiltroMatriz] = useState<"todas" | "cubierto" | "al_limite" | "deficit">("todas");
+  const [busquedaMatriz, setBusquedaMatriz] = useState("");
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["dashboard-data"],
     queryFn: async () => {
@@ -51,10 +59,7 @@ export function DashboardView() {
             <div key={i} className="h-28 bg-muted rounded-lg"></div>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-80 bg-muted rounded-lg"></div>
-          <div className="h-80 bg-muted rounded-lg"></div>
-        </div>
+        <div className="h-96 bg-muted rounded-xl"></div>
       </div>
     );
   }
@@ -67,7 +72,7 @@ export function DashboardView() {
         <p className="text-sm text-muted-foreground mb-4">No se pudo calcular el estado actual del inventario</p>
         <button
           onClick={() => refetch()}
-          className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium"
+          className="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium cursor-pointer"
         >
           Reintentar
         </button>
@@ -75,7 +80,16 @@ export function DashboardView() {
     );
   }
 
-  const { metricas, calculoConsumibles, calculoUPS, consolidado, agencias } = data;
+  const { metricas, calculoConsumibles, calculoUPS, matrizAcopios = [], agencias } = data;
+
+  // Filtrado de la Matriz de Acopios
+  const matrizFiltrada = (matrizAcopios as MatrizAcopioItem[]).filter((item) => {
+    const matchEstado = filtroMatriz === "todas" || item.estadoCobertura === filtroMatriz;
+    const matchBusqueda =
+      item.agenciaNombre.toLowerCase().includes(busquedaMatriz.toLowerCase()) ||
+      item.departamento.toLowerCase().includes(busquedaMatriz.toLowerCase());
+    return matchEstado && matchBusqueda;
+  });
 
   // Datos para gráfico por agencia: Requerido vs Existencia de consumibles
   const agenciasChartData = agencias.map((ag: { id: number; nombre: string }) => {
@@ -116,366 +130,315 @@ export function DashboardView() {
             Panel Ejecutivo de Operaciones IT
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Monitoreo en tiempo real de agencias, impresoras, stock y requerimientos automáticos
+            Balance operativo: Acopios a abrir vs Impresoras vs Consumibles vs Respaldo UPS
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
-            href="/agencias"
+            href="/transferencias"
             className="flex items-center gap-2 px-3.5 py-2 bg-primary hover:bg-primary-600 text-white rounded-lg text-sm font-semibold shadow-xs transition-all"
           >
-            <Building2 className="w-4 h-4" />
-            <span>+ Agregar Agencia</span>
+            <ArrowRightLeft className="w-4 h-4" />
+            <span>+ Nueva Transferencia</span>
           </Link>
           <Link
-            href="/impresoras"
-            className="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-all"
+            href="/reportes"
+            className="flex items-center gap-2 px-3.5 py-2 border border-border hover:bg-muted text-foreground rounded-lg text-sm font-semibold transition-all"
           >
-            <Printer className="w-4 h-4" />
-            <span>+ Asignar Impresora</span>
-          </Link>
-          <Link
-            href="/consumibles"
-            className="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-all"
-          >
-            <Package className="w-4 h-4" />
-            <span>+ Cargar Stock Tóner</span>
-          </Link>
-          <Link
-            href="/ups"
-            className="flex items-center gap-2 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-all"
-          >
-            <Zap className="w-4 h-4" />
-            <span>+ Registrar UPS</span>
+            <ArrowUpRight className="w-4 h-4" />
+            <span>Ver Reportes Consolidados</span>
           </Link>
         </div>
       </div>
 
-      {/* Banner de Inicio / Carga de Datos si no hay agencias registradas */}
-      {metricas.totalAgencias === 0 && (
-        <div className="bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-emerald-600/10 border-2 border-dashed border-primary/40 rounded-2xl p-6 sm:p-8">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              Base de Datos Conectada - Lista para registrar información
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-foreground">
-              Comienza a registrar la información de tus agencias y equipos
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              La base de datos se encuentra limpia y lista para que ingreses los datos reales. 
-              El flujo sugerido para empezar es:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-              <Link
-                href="/agencias"
-                className="p-4 rounded-xl bg-card border border-border shadow-xs hover:border-primary/50 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-primary flex items-center justify-center font-bold text-sm mb-2 group-hover:scale-110 transition-transform">
-                    1
-                  </div>
-                  <h3 className="font-bold text-sm text-foreground">Crear Agencias</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Registra el nombre de cada agencia o sucursal (ej. Central, Sucursal Norte).
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-primary mt-4 flex items-center gap-1">
-                  Ir a Agencias &rarr;
-                </span>
-              </Link>
-
-              <Link
-                href="/agencias"
-                className="p-4 rounded-xl bg-card border border-border shadow-xs hover:border-emerald-500/50 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-sm mb-2 group-hover:scale-110 transition-transform">
-                    2
-                  </div>
-                  <h3 className="font-bold text-sm text-foreground">Ficha y Diagnóstico</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    En la lista de agencias pulsa "Ficha y Diagnóstico" para agregar en una sola pantalla sus impresoras, tóneres y UPS.
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-emerald-600 mt-4 flex items-center gap-1">
-                  Usar Asistente Todo en Uno &rarr;
-                </span>
-              </Link>
-
-              <Link
-                href="/reportes"
-                className="p-4 rounded-xl bg-card border border-border shadow-xs hover:border-amber-500/50 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-sm mb-2 group-hover:scale-110 transition-transform">
-                    3
-                  </div>
-                  <h3 className="font-bold text-sm text-foreground">Reporte Automático</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    El sistema calculará en tiempo real qué falta comprar y qué sobra para cada equipo.
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-amber-600 mt-4 flex items-center gap-1">
-                  Ver Requerimientos &rarr;
-                </span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Tarjetas Ejecutivas de KPIs (8 Métricas Solicitadas) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Agencias */}
-        <div className="bg-card p-5 rounded-xl border border-border shadow-2xs hover:shadow-xs transition-all">
+      {/* Tarjetas Principales de KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        {/* Total Acopios Programados */}
+        <div className="bg-card p-5 rounded-xl border border-primary/20 bg-primary/5 shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Agencias
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+              Acopios a Abrir
             </span>
-            <div className="p-2 rounded-lg bg-blue-500/10 text-primary">
-              <Building2 className="w-4 h-4" />
+            <div className="p-2 rounded-lg bg-primary/15 text-primary">
+              <Layers className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalAgencias)}</span>
-            <span className="text-xs text-muted-foreground ml-2">activas</span>
+          <div className="mt-3 flex items-baseline justify-between">
+            <span className="text-3xl font-black text-foreground">{formatNumber(metricas.totalAcopios || 0)}</span>
+            <span className="text-xs text-muted-foreground">
+              en {metricas.totalAgencias} agencias
+            </span>
           </div>
+          <p className="text-2xs text-muted-foreground mt-1">1 acopio = 1 impresora requerida</p>
         </div>
 
-        {/* Total Impresoras */}
+        {/* Impresoras en Stock vs Acopios */}
         <div className="bg-card p-5 rounded-xl border border-border shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Impresoras
+              Impresoras en Stock
             </span>
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
               <Printer className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-baseline justify-between">
             <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalImpresoras)}</span>
-            <span className="text-xs text-muted-foreground ml-2">equipos</span>
+            {metricas.totalImpresorasFaltantesAcopios > 0 ? (
+              <span className="text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded">
+                Faltan {metricas.totalImpresorasFaltantesAcopios}
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
+                Cubierto
+              </span>
+            )}
           </div>
-        </div>
-
-        {/* Total UPS */}
-        <div className="bg-card p-5 rounded-xl border border-border shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total UPS
-            </span>
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
-              <Zap className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalUps)}</span>
-            <span className="text-xs text-muted-foreground ml-2">unidades</span>
-          </div>
+          <p className="text-2xs text-muted-foreground mt-1">Inventario físico en agencias</p>
         </div>
 
         {/* Total Consumibles */}
         <div className="bg-card p-5 rounded-xl border border-border shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Consumibles
+              Tóner y Tinta en Stock
             </span>
             <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-600">
               <Package className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-baseline justify-between">
             <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalConsumibles)}</span>
-            <span className="text-xs text-muted-foreground ml-2">en inventario</span>
+            <span className="text-xs text-muted-foreground">unidades</span>
           </div>
+          <p className="text-2xs text-muted-foreground mt-1">Para acopios en operación</p>
         </div>
 
-        {/* Total Compras Adicionales */}
+        {/* Total UPS */}
         <div className="bg-card p-5 rounded-xl border border-border shadow-2xs hover:shadow-xs transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Compras Adicionales
+              UPS en Existencia
             </span>
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600">
-              <ShoppingCart className="w-4 h-4" />
+            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+              <Zap className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalComprasAdicionales)}</span>
-            <span className="text-xs text-muted-foreground ml-2">artículos</span>
+          <div className="mt-3 flex items-baseline justify-between">
+            <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalUps)}</span>
+            <span className="text-xs text-muted-foreground">unidades</span>
           </div>
-        </div>
-
-        {/* Total Transferencias */}
-        <div className="bg-card p-5 rounded-xl border border-border shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Transferencias
-            </span>
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600">
-              <ArrowRightLeft className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-foreground">{formatNumber(metricas.totalTransferencias)}</span>
-            <span className="text-xs text-muted-foreground ml-2">movimientos</span>
-          </div>
-        </div>
-
-        {/* Total Requerimiento Pendiente (Crítico) */}
-        <div className="bg-card p-5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/10 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
-              Requerimiento Pendiente
-            </span>
-            <div className="p-2 rounded-lg bg-rose-500/15 text-rose-600">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline">
-            <span className="text-3xl font-black text-rose-600 dark:text-rose-400">
-              {formatNumber(metricas.totalRequerimientoPendiente)}
-            </span>
-            <span className="text-xs font-medium text-rose-700 dark:text-rose-400 ml-2">
-              por adquirir
-            </span>
-          </div>
-        </div>
-
-        {/* Ahorro por Transferencias */}
-        <div className="bg-card p-5 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-2xs hover:shadow-xs transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Ahorro Transferencias
-            </span>
-            <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-600">
-              <Sparkles className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline">
-            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              {formatNumber(metricas.ahorroPorTransferencias)}
-            </span>
-            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 ml-2">
-              unidades evitadas
-            </span>
-          </div>
+          <p className="text-2xs text-muted-foreground mt-1">Protección eléctrica compatible</p>
         </div>
       </div>
 
-      {/* Alertas Automáticas Inteligentes */}
-      <div className="bg-card border border-border rounded-xl p-5 shadow-2xs">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></div>
-            <h2 className="text-base font-bold text-foreground">
-              Alertas Automáticas de Operación y Stock Crítico
+      {/* ========================================================================= */}
+      {/* SECCIÓN ESTELAR: MATRIZ DE COBERTURA OPERATIVA (ACOPIOS VS EQUIPAMIENTO) */}
+      {/* ========================================================================= */}
+      <div className="bg-card border border-border rounded-xl shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/20">
+          <div>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              <Layers className="w-5 h-5 text-primary" />
+              Matriz de Cobertura Operativa: Acopios vs Equipamiento por Agencia
             </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Compara directamente los acopios a abrir vs impresoras en existencia vs stock de tóner/tinta vs respaldo UPS
+            </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium">
-            <span className="flex items-center gap-1 text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              Verde: Correcto
-            </span>
-            <span className="flex items-center gap-1 text-amber-600">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              Amarillo: Al Límite
-            </span>
-            <span className="flex items-center gap-1 text-rose-600">
-              <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-              Rojo: Requiere Compra
-            </span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Buscador */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Filtrar agencia..."
+                value={busquedaMatriz}
+                onChange={(e) => setBusquedaMatriz(e.target.value)}
+                className="pl-8 pr-3 py-1.5 text-xs bg-background rounded-md border border-border focus:outline-hidden focus:ring-1 focus:ring-primary w-40 md:w-48"
+              />
+            </div>
+
+            {/* Filtro por estado */}
+            <div className="flex items-center bg-background rounded-md border border-border p-0.5 text-xs">
+              <button
+                onClick={() => setFiltroMatriz("todas")}
+                className={`px-2.5 py-1 rounded cursor-pointer font-medium transition-colors ${filtroMatriz === "todas" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Todas ({matrizAcopios.length})
+              </button>
+              <button
+                onClick={() => setFiltroMatriz("cubierto")}
+                className={`px-2.5 py-1 rounded cursor-pointer font-medium transition-colors ${filtroMatriz === "cubierto" ? "bg-emerald-600 text-white" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Cubiertas
+              </button>
+              <button
+                onClick={() => setFiltroMatriz("deficit")}
+                className={`px-2.5 py-1 rounded cursor-pointer font-medium transition-colors ${filtroMatriz === "deficit" ? "bg-rose-600 text-white" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Con Déficit
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Alertas de Consumibles */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 text-rose-500" />
-              Consumibles con Déficit Inmediato ({consumiblesRojos.length})
-            </h3>
-            {consumiblesRojos.length === 0 ? (
-              <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/40 text-emerald-700 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Todos los consumibles cumplen con el stock mínimo requerido.</span>
-              </div>
-            ) : (
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                {consumiblesRojos.map((item: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <span className="font-bold text-foreground">{item.agenciaNombre}</span>
-                      <span className="text-muted-foreground"> • {item.tipoConsumible} {item.modeloImpresora}</span>
-                      <div className="text-[11px] text-muted-foreground">
-                        Stock: {item.existenciaActual} / Req: {item.cantidadRequerida}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[11px]">
-                        Comprar {item.cantidadAComprar}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Tabla Matriz */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
+              <tr>
+                <th className="px-5 py-3.5">Agencia / Sucursal</th>
+                <th className="px-4 py-3.5 text-center bg-primary/5 text-primary font-bold">Acopios a Abrir</th>
+                <th className="px-5 py-3.5 text-center">Impresoras en Stock</th>
+                <th className="px-5 py-3.5 text-center">Tóner / Tinta en Stock</th>
+                <th className="px-5 py-3.5 text-center">UPS en Existencia</th>
+                <th className="px-5 py-3.5 text-center">Estado de Cobertura</th>
+                <th className="px-4 py-3.5 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {matrizFiltrada.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground text-xs">
+                    No se encontraron agencias con los filtros aplicados.
+                  </td>
+                </tr>
+              ) : (
+                matrizFiltrada.map((item) => {
+                  // Badges de comparación
+                  const impStatusColor =
+                    item.impresorasFaltantes > 0
+                      ? "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                      : item.impresorasSobrantes > 0
+                      ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900"
+                      : "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900";
 
-          {/* Alertas de UPS */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              UPS Faltantes por Regla 1 a 1 ({upsRojos.length})
-            </h3>
-            {upsRojos.length === 0 ? (
-              <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/40 text-emerald-700 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Todas las impresoras cuentan con su respectiva UPS de respaldo.</span>
-              </div>
-            ) : (
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
-                {upsRojos.map((item: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <span className="font-bold text-foreground">{item.agenciaNombre}</span>
-                      <span className="text-muted-foreground"> • {item.modeloImpresora} ({item.upsRequeridaVa} VA)</span>
-                      <div className="text-[11px] text-muted-foreground">
-                        UPS Existentes: {item.upsExistentes} / Equipos: {item.cantidadImpresoras}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[11px]">
-                        Faltan {item.upsFaltantes}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  const conStatusColor =
+                    item.consumiblesFaltantes > 0
+                      ? "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                      : item.consumiblesSobrantes > 0
+                      ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900"
+                      : "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900";
+
+                  const upsStatusColor =
+                    item.upsFaltantes > 0
+                      ? "text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                      : item.upsSobrantes > 0
+                      ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900"
+                      : "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900";
+
+                  return (
+                    <tr key={item.agenciaId} className="hover:bg-muted/20 transition-colors">
+                      {/* Agencia */}
+                      <td className="px-5 py-4">
+                        <div className="font-bold text-foreground">{item.agenciaNombre}</div>
+                        <div className="text-xs text-muted-foreground">{item.departamento}</div>
+                      </td>
+
+                      {/* Acopios */}
+                      <td className="px-4 py-4 text-center bg-primary/5">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-black text-sm">
+                          {item.acopiosAAbrir}
+                        </span>
+                      </td>
+
+                      {/* Impresoras vs Acopios */}
+                      <td className="px-5 py-4 text-center">
+                        <div className="font-bold text-foreground">
+                          {item.impresorasExistentes} <span className="text-xs font-normal text-muted-foreground">/ {item.impresorasRequeridas} req.</span>
+                        </div>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded text-2xs font-bold border ${impStatusColor}`}>
+                          {item.impresorasFaltantes > 0
+                            ? `Faltan ${item.impresorasFaltantes}`
+                            : item.impresorasSobrantes > 0
+                            ? `Sobran ${item.impresorasSobrantes}`
+                            : "Exacto"}
+                        </span>
+                      </td>
+
+                      {/* Consumibles vs Requerimiento de Acopios */}
+                      <td className="px-5 py-4 text-center">
+                        <div className="font-bold text-foreground">
+                          {item.consumiblesExistentes} <span className="text-xs font-normal text-muted-foreground">/ {item.consumiblesRequeridos} req.</span>
+                        </div>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded text-2xs font-bold border ${conStatusColor}`}>
+                          {item.consumiblesFaltantes > 0
+                            ? `Faltan ${item.consumiblesFaltantes}`
+                            : item.consumiblesSobrantes > 0
+                            ? `Sobran ${item.consumiblesSobrantes}`
+                            : "Stock OK"}
+                        </span>
+                      </td>
+
+                      {/* UPS vs Impresoras de Acopios */}
+                      <td className="px-5 py-4 text-center">
+                        <div className="font-bold text-foreground">
+                          {item.upsExistentes} <span className="text-xs font-normal text-muted-foreground">/ {item.upsRequeridas} req.</span>
+                        </div>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded text-2xs font-bold border ${upsStatusColor}`}>
+                          {item.upsFaltantes > 0
+                            ? `Faltan ${item.upsFaltantes}`
+                            : item.upsSobrantes > 0
+                            ? `Sobran ${item.upsSobrantes}`
+                            : "Protegido"}
+                        </span>
+                      </td>
+
+                      {/* Estado General */}
+                      <td className="px-5 py-4 text-center">
+                        {item.estadoCobertura === "cubierto" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Cubierta
+                          </span>
+                        ) : item.estadoCobertura === "al_limite" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-xs">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Al Límite
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold text-xs">
+                            <ShieldAlert className="w-3.5 h-3.5" />
+                            Déficit
+                          </span>
+                        )}
+                        <p className="text-2xs text-muted-foreground mt-1 max-w-xs mx-auto truncate" title={item.mensajeEstado}>
+                          {item.mensajeEstado}
+                        </p>
+                      </td>
+
+                      {/* Acción */}
+                      <td className="px-4 py-4 text-right whitespace-nowrap">
+                        <Link
+                          href="/transferencias"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border border-border hover:bg-muted text-foreground transition-colors"
+                        >
+                          <ArrowRightLeft className="w-3 h-3 text-primary" />
+                          <span>Transferir</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Gráficos Ejecutivos Recharts */}
+      {/* Alertas y Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico 1: Requerimientos vs Existencia por Agencia */}
         <div className="lg:col-span-2 bg-card p-5 rounded-xl border border-border shadow-2xs">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              Consumibles: Stock Actual vs Requerimiento por Agencia
+              Consumibles Requeridos para Acopios vs Stock Actual
             </h3>
             <p className="text-xs text-muted-foreground">
-              Comparativa de existencias operativas contra la regla de consumibles requeridos
+              Demanda calculada sobre los acopios activos de cada agencia vs inventario disponible
             </p>
           </div>
           <div className="h-72 w-full">
@@ -487,9 +450,9 @@ export function DashboardView() {
                   contentStyle={{ backgroundColor: "#1e293b", borderColor: "#334155", color: "#f8fafc", borderRadius: 8, fontSize: 12 }}
                 />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="Requerido" fill="#0078D4" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Existente" fill="#107C41" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Faltante" fill="#D13438" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Requerido" fill="#0078D4" radius={[4, 4, 0, 0]} name="Requerido (Acopios)" />
+                <Bar dataKey="Existente" fill="#107C41" radius={[4, 4, 0, 0]} name="Stock Físico" />
+                <Bar dataKey="Faltante" fill="#D13438" radius={[4, 4, 0, 0]} name="Falta Comprar" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -499,36 +462,44 @@ export function DashboardView() {
         <div className="bg-card p-5 rounded-xl border border-border shadow-2xs flex flex-col">
           <div className="mb-4">
             <h3 className="text-sm font-bold text-foreground">
-              Déficit de UPS por Capacidad (VA)
+              Déficit de UPS para Acopios por Capacidad (VA)
             </h3>
             <p className="text-xs text-muted-foreground">
-              Distribución de unidades requeridas por potencia
+              Distribución de unidades requeridas para respaldar los acopios
             </p>
           </div>
           <div className="h-60 w-full flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={upsChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  labelLine={false}
-                >
-                  {upsChartData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {upsChartData.length === 0 || upsChartData.every((i) => i.value === 0) ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-4 text-muted-foreground">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-2" />
+                <p className="text-xs font-semibold text-foreground">Respaldo UPS Completo</p>
+                <p className="text-2xs">Todas las impresoras de acopios cuentan con UPS compatible.</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={upsChartData.filter((i) => i.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    labelLine={false}
+                  >
+                    {upsChartData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
           <div className="pt-2 border-t border-border text-center">
             <span className="text-xs font-semibold text-muted-foreground">
-              Total Faltante de UPS:{" "}
+              Total Déficit de UPS:{" "}
               <strong className="text-foreground">
                 {upsChartData.reduce((acc, i) => acc + i.value, 0)} unidades
               </strong>

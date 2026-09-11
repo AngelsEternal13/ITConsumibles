@@ -12,6 +12,7 @@ import {
 import {
   calcularConsumibles,
   calcularUPS,
+  calcularMatrizAcopios,
   generarConsolidado,
 } from "@/lib/calculations";
 import { generarLibroExcel } from "@/lib/export-excel";
@@ -46,9 +47,19 @@ export async function GET() {
 
     const calculoUPS = calcularUPS(agenciasData, impresorasData, upsData, reglasData);
 
+    const matrizAcopios = calcularMatrizAcopios(
+      agenciasData,
+      impresorasData,
+      consumiblesData,
+      upsData,
+      calculoConsumibles,
+      calculoUPS
+    );
+
     const consolidado = generarConsolidado(
       calculoConsumibles,
       calculoUPS,
+      matrizAcopios,
       comprasData
     );
 
@@ -64,6 +75,7 @@ export async function GET() {
     const buffer = await generarLibroExcel({
       consumibles: calculoConsumibles,
       ups: calculoUPS,
+      matrizAcopios,
       comprasAdicionales: comprasData,
       transferencias: transferenciasConNombres,
       consolidado,
@@ -79,8 +91,8 @@ export async function GET() {
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generando Excel:", error);
-    return NextResponse.json({ error: "Error al generar archivo Excel" }, { status: 500 });
+    return NextResponse.json({ error: "Error al generar archivo Excel", details: error?.message }, { status: 500 });
   }
 }

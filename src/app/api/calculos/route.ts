@@ -12,6 +12,7 @@ import {
 import {
   calcularConsumibles,
   calcularUPS,
+  calcularMatrizAcopios,
   generarConsolidado,
   calcularMetricasDashboard,
 } from "@/lib/calculations";
@@ -46,9 +47,19 @@ export async function GET() {
 
     const calculoUPS = calcularUPS(agenciasData, impresorasData, upsData, reglasData);
 
+    const matrizAcopios = calcularMatrizAcopios(
+      agenciasData,
+      impresorasData,
+      consumiblesData,
+      upsData,
+      calculoConsumibles,
+      calculoUPS
+    );
+
     const consolidado = generarConsolidado(
       calculoConsumibles,
       calculoUPS,
+      matrizAcopios,
       comprasData
     );
 
@@ -60,13 +71,15 @@ export async function GET() {
       transferenciasData,
       comprasData,
       calculoConsumibles,
-      calculoUPS
+      calculoUPS,
+      matrizAcopios
     );
 
     return NextResponse.json({
       metricas,
       calculoConsumibles,
       calculoUPS,
+      matrizAcopios,
       consolidado,
       agencias: agenciasData,
       impresoras: impresorasData,
@@ -76,10 +89,10 @@ export async function GET() {
       transferencias: transferenciasData,
       comprasAdicionales: comprasData,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al calcular requerimientos:", error);
     return NextResponse.json(
-      { error: "Error interno al calcular requerimientos" },
+      { error: "Error interno al calcular requerimientos", details: error?.message },
       { status: 500 }
     );
   }
